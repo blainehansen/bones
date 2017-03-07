@@ -1,0 +1,248 @@
+// Root Elements
+
+@mixin root-box() {
+}
+
+@mixin horizontal-root-box {}
+
+@mixin viewport-root-box(
+	// can be vertical or horizontal, for what 
+	$orientation: 'vertical') {
+
+}
+
+
+// Containers
+
+$bn-box-types: (
+	'text-box': (
+		padding: 'xs-1ru, md-2ru'
+	)
+);
+
+// internally (and maybe we can expose it), we can use responsive tokens with placeholders, like bp1, bp2, to indicate the first and second smallest (etc) breakpoints. this way we don't rely on knowing the breakpoints to set defaults and types etc. 
+
+
+// sizing options specifically to help user cope with vertical/horizontal context
+@mixin grid-box(
+	// accepts single number tokens, with shorthand 'fill' meaning 12
+	$width: 'bn.bp.1-fill',
+	// accepts multiple number tokens. ratio ignores typical sizing parameters and gives sizes based on total divided by 100. also their target.
+	// columns and columnsRatio cannot be set together
+	$columns: 1, $columnsRatio: 1, $columnsTarget: 'div', $columnsGutter,
+	// only valid when used in conjunction with the $columns or $columnsRatio arguments
+	$external-gutters: true,
+	// uses the $bn-default-box-type if defined. allows for string none to override default.
+	$type: null,
+	// accepts tokens with left/right instead of number, or just left/right for all breaks
+	// overrides left/right margin values in types, any shorthand not giving the a conflicting side specifically, or a zero value. conflicts otherwise
+	// overridden by specific values set only at certain breakpoints
+	// both behave exactly the same way, just aliases. Canonical is push and that is what it's resolved to in things like type combinations
+	$push: null, $pull: null,
+	// if we do everything with flexbox, we could change the add order of the internals
+	$invertDirection: false,
+
+	// accepts tokens. where applicable, 'push' is valid for taking up all on one side (auto)
+	// push shorthands don't conflict at all with gutters
+	// perhaps give a warning indicating when top/bottom margins are set with percentages?
+	// cross axis refers to non-expanding one, and main refers to expanding one.
+	$margin, $margin-cross, $margin-main, $margin-right, $margin-left, $margin-top, $margin-bottom,
+	// accepts tokens. only ru units are accepted
+	$gutter, $gutter-cross, $gutter-main, $gutter-right, $gutter-left, $gutter-top, $gutter-bottom,
+	// whether the gutters should be included on the outer edges. accepts true/false, or a list of sides. All tokenizable.
+	// accepts tokens.
+	$padding, $padding-cross, $padding-main, $padding-right, $padding-left, $padding-top, $padding-bottom,
+	// accepts tokens. only ru units are accepted
+	$border-width, $border-cross-width, $border-main-width, $border-right-width, $border-left-width, $border-top-width, $border-bottom-width) {
+
+
+	box-sizing: border-box;
+
+	@if $type == null and variable-exists($bn-default-box-type) {
+		$typeMap = $bn-default-box-type;
+	}
+	@else if $type and $type != 'none' {
+		$typeMap = map-get($bn-box-types, $type);
+	}
+
+
+	// no matter what, we need to rectify all arguments with each other
+	// first resolve conflicts and throw errors
+
+	@if $columns and $columnsRatio {
+		@error "$columns and $columnsRatio can't be set at the same time.";
+	}
+
+
+	// the push shorthands conflict with each other
+	@if $push-left == true and $push-right == true {
+		@error "You can't $push-left and $push-right.";
+	}
+	// and with left/right margin
+	// this is only the first check. the shorthand checks will have to determine if there are finer grained conflicts at any breakpoints
+	@if $push-right == true and $margin-left {
+		@error "You can't push right and set a left margin.";
+	}
+	@if $push-left == true and $margin-right {
+		@error "You can't push left and set a right margin.";
+	}
+
+	// gutters can only be called in rus
+	@each $g in $gutter, $gutter-right, $gutter-left, $gutter-top, $gutter-bottom {
+		@if not defined-in-ru($g) {
+			@error "Gutters can only be defined in ru's.";
+		}
+	}
+
+	// border widths can only be called in rus
+	@each $b in $border, $border-right-width, $border-left-width, $border-top-width, $border-bottom-width {
+		@if not defined-in-ru($b) {
+			@error "Border widths can only be defined in ru's.";
+		}
+	}
+
+
+	@each $bp in $bn-breakpoints {
+		@include bn-media($bp) {
+			#{attribute}: map-get()
+		}
+	}
+
+
+
+	// then build the final argument map, giving precedence to arguments passed, then earlier types
+	// then pass those arguments to sub mixins that handle the actual work.
+
+	// build a fine grained map, with no shorthands and only left/right etc.
+	// go through that map and resolve direction groups to shorthands if possible
+
+
+	// for each attribute
+	// call sub-mixin for that, create an anonymous type map with any relevant attributes included
+
+	// process array of types and rectify final value.
+	// order of precedence: passed in argument, earlier types first
+
+
+	// set width
+	// incorporate gutters
+	// figure out each 
+	// margin - gutter
+
+	// set all margins
+	// incorporate gutters
+	// margin + gutter
+
+	// set all paddings
+	// incorporate border widths
+	// padding - border width
+
+	// use columns to set nth-of type
+
+}
+
+
+@mixin bn-h-grid-box(
+	// accepts single number tokens, with shorthand 'fill' meaning 12
+	$height: 'bn.bp.1-fill',
+	// accepts multiple number tokens. ratio ignores typical sizing parameters and gives sizes based on total divided by 100. also their target.
+	// columns and columnsRatio cannot be set together
+	$columns: 1, $columnsRatio: 1, $columnsTarget: 'div',
+	// uses the $bn-default-h-box-type if defined. allows for string none to override default.
+	$type: null,
+	// accepts tokens with left/right instead of number, or just left/right for all breaks
+	// overrides left/right margin values in types, any shorthand not giving the a conflicting side specifically, or a zero value. conflicts otherwise
+	// overridden by specific values set only at certain breakpoints
+	// both behave exactly the same way, just aliases. Canonical is push and that is what it's resolved to in things like type combinations
+	$push: null, $pull: null,
+
+	// accepts tokens. where applicable, 'push' is valid for taking up all on one side (auto)
+	// push shorthands don't conflict at all with gutters
+	// perhaps give a warning indicating when top/bottom margins are set with percentages?
+	// cross axis refers to non-expanding one, and main refers to expanding one.
+	$margin, $margin-main, $margin-cross, $margin-right, $margin-left, $margin-top, $margin-bottom,
+	// accepts tokens. only ru units are accepted
+	$gutter, $gutter-main, $gutter-cross, $gutter-right, $gutter-left, $gutter-top, $gutter-bottom,
+	// whether the gutters should be included on the outer edges. accepts true/false, or a list of sides. All tokenizable.
+	// only valid when used in conjunction with the $columns or $columnsRatio arguments
+	$external-gutters: true,
+	// accepts tokens.
+	$padding, $padding-main, $padding-cross, $padding-right, $padding-left, $padding-top, $padding-bottom,
+	// accepts tokens. only ru units are accepted
+	$border-width, $border-cross-width, $border-main-width, $border-right-width, $border-left-width, $border-top-width, $border-bottom-width) {
+
+}
+
+
+@mixin bn-window-box(
+	// accepts 'vertical', 'horizontal', or 'both'.
+	// Contents within behave like the corresponding grid box.
+	$orientation: 'vertical',
+	// both need to be set, and depending on context different things will work. accepts tokens of all kinds, we simply have to rely on user to give intelligent things.
+	$width: 'bn.bp.1-fill', $height 'bn.bp.1-fill',
+	// tells us whether this should act like a block element in its context or an 'inline'(block) one.
+	$nature: 'block',
+	// accepts multiple number tokens. ratio ignores typical sizing parameters and gives sizes based on total divided by 100. also their target.
+	// columns and columnsRatio cannot be set together
+	$columns: 1, $columnsRatio: 1, $columnsTarget: 'div',
+	// uses the $bn-default-h-box-type if defined. allows for string none to override default.
+	$type: null,
+	// accepts tokens with left/right instead of number, or just left/right for all breaks
+	// overrides left/right margin values in types, any shorthand not giving the a conflicting side specifically, or a zero value. conflicts otherwise
+	// overridden by specific values set only at certain breakpoints
+	// both behave exactly the same way, just aliases. Canonical is push and that is what it's resolved to in things like type combinations
+	$push: null, $pull: null,
+
+	// accepts tokens. where applicable, 'push' is valid for taking up all on one side (auto)
+	// push shorthands don't conflict at all with gutters
+	// perhaps give a warning indicating when top/bottom margins are set with percentages?
+	// cross axis refers to non-expanding one, and main refers to expanding one.
+	$margin, $margin-main, $margin-cross, $margin-right, $margin-left, $margin-top, $margin-bottom,
+	// accepts tokens. only ru units are accepted
+	$gutter, $gutter-main, $gutter-cross, $gutter-right, $gutter-left, $gutter-top, $gutter-bottom,
+	// whether the gutters should be included on the outer edges. accepts true/false, or a list of sides. All tokenizable.
+	// only valid when used in conjunction with the $columns or $columnsRatio arguments
+	$external-gutters: true,
+	// accepts tokens.
+	$padding, $padding-main, $padding-cross, $padding-right, $padding-left, $padding-top, $padding-bottom,
+	// accepts tokens. only ru units are accepted
+	$border-width, $border-cross-width, $border-main-width, $border-right-width, $border-left-width, $border-top-width, $border-bottom-width) {
+
+}
+
+
+@mixin bn-h-window-box(
+	// accepts 'vertical', 'horizontal', or 'both'.
+	// Contents within behave like the corresponding grid box.
+	$orientation: 'vertical',
+	// both need to be set, and depending on context different things will work. accepts tokens of all kinds, we simply have to rely on user to give intelligent things.
+	$width: 'bn.bp.1-fill', $height 'bn.bp.1-fill',
+	// tells us whether this should act like a block element in its context or a an 'inline'(block) one.
+	$nature: 'block',
+	// accepts multiple number tokens. ratio ignores typical sizing parameters and gives sizes based on total divided by 100. also their target.
+	// columns and columnsRatio cannot be set together
+	$columns: 1, $columnsRatio: 1, $columnsTarget: 'div',
+	// uses the $bn-default-h-box-type if defined. allows for string none to override default.
+	$type: null,
+	// accepts tokens with left/right instead of number, or just left/right for all breaks
+	// overrides left/right margin values in types, any shorthand not giving the a conflicting side specifically, or a zero value. conflicts otherwise
+	// overridden by specific values set only at certain breakpoints
+	// both behave exactly the same way, just aliases. Canonical is push and that is what it's resolved to in things like type combinations
+	$push: null, $pull: null,
+
+	// accepts tokens. where applicable, 'push' is valid for taking up all on one side (auto)
+	// push shorthands don't conflict at all with gutters
+	// perhaps give a warning indicating when top/bottom margins are set with percentages?
+	// cross axis refers to non-expanding one, and main refers to expanding one.
+	$margin, $margin-main, $margin-cross, $margin-right, $margin-left, $margin-top, $margin-bottom,
+	// accepts tokens. only ru units are accepted
+	$gutter, $gutter-main, $gutter-cross, $gutter-right, $gutter-left, $gutter-top, $gutter-bottom,
+	// whether the gutters should be included on the outer edges. accepts true/false, or a list of sides. All tokenizable.
+	// only valid when used in conjunction with the $columns or $columnsRatio arguments
+	$external-gutters: true,
+	// accepts tokens.
+	$padding, $padding-main, $padding-cross, $padding-right, $padding-left, $padding-top, $padding-bottom,
+	// accepts tokens. only ru units are accepted
+	$border-width, $border-cross-width, $border-main-width, $border-right-width, $border-left-width, $border-top-width, $border-bottom-width) {
+
+}

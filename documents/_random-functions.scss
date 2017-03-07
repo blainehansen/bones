@@ -1,0 +1,139 @@
+// @function pow($base, $exponent)
+// 	$value: $base
+// 	@if $exponent > 1
+// 		@for $i from 2 through $exponent
+// 			$value: $value * $base
+// 	@if $exponent < 1
+// 		@for $i from 0 through -$exponent
+// 			$value: $value / $base
+// 	@return $value
+
+// @function sqrt($number)
+// 	$root: 4
+// 	@for $i from 1 through 50
+// 		$root: $root - (pow($root, 2) - $number) / (2 * $root)
+// 	@return $root
+
+// adapted from http://www.kirupa.com/forum/showthread.php?378287-Robert-Penner-s-Easing-Equations-in-Pure-JS-%28no-jQuery%29
+// @function ease($iteration, $start-value, $change, $total-iterations, $ease)
+// 	@debug $iteration, $start-value, $change, $total-iterations, $ease
+// 	$progress: $iteration / $total-iterations
+// 	@debug $progress
+
+// 	// value increases evenly
+// 	@if $ease == linear
+// 		@return $change * $progress + $start-value
+
+// 	// value increases on a curve, accelerating
+// 	@if $ease == in-quad
+// 		@return $change * $progress * $progress + $start-value
+
+// 	// value increases on a curve, decelerating
+// 	@if $ease == out-quad
+// 		@return -$change * $progress * ($progress - 2) + $start-value
+
+// 	// value accelerates sharply
+// 	@if $ease == in-cubic
+// 		@return $change * pow($progress, 3) + $start-value
+
+// 	// value decelerates sharply
+// 	@if $ease == out-cubic
+// 		@return $change * (pow($progress - 1, 3) + 1) + $start-value
+
+// 	// value accelerates more sharply
+// 	@if $ease == in-quart
+// 		@return $change * pow($progress, 4) + $start-value
+
+// 	// value decelerates more sharply
+// 	@if $ease == out-quart
+// 		@return -$change * (pow($progress - 1, 4) - 1) + $start-value
+
+// 	// value accelerates very sharply
+// 	@if $ease == in-quint
+// 		@return $change * pow($progress, 5) + $start-value
+
+// 	// value decelerates very sharply
+// 	@if $ease == out-quint
+// 		@return $change * (pow($progress - 1, 5) + 1) + $start-value
+
+@function spread($start: 1, $stop: 10, $step: 1) {
+	$map: ();
+	$i: $start;
+	@while $i <= $stop {
+		$map: map-merge($map, ($i: 'thing'));
+		$i: $i + $step;
+	}
+	@return $map;
+}
+
+@function hue-spread($seed-hue, $names) {
+	$divisions: length($names);
+	$step: 360 / $divisions;
+
+	$map: ();
+	$cur-angle: $seed-hue;
+	@each $name in $names {
+		$map: map-merge($map, ($name: $cur-angle));
+		$cur-angle: $cur-angle + $step;
+	}
+
+	@return $map;
+}
+
+@function percentage-spread() {
+	@return 1;
+}
+
+@function percentage-blast() {
+	@return 1;
+}
+
+@function color-spread($hue-map, $saturation, $brightness, $opacity: 100) {
+	$color-map: ();
+	@each $class, $hue in $hue-map {
+		$color-map: map-merge($color-map, ($class: hsla($hue, $saturation, $brightness, $opacity)));
+	}
+	@return $color-map;
+}
+
+@mixin __apply-color-classes($color-map, $hover-darken, $prefix, $attribute) {
+	@debug $color-map, $hover-darken, $prefix, $attribute;
+	@each $class, $color in $color-map {
+		@debug $class, $color;
+		.thing-#{$prefix}#{$class} {
+			@debug &;
+			$attribute: $color;
+			&:hover {
+				$attribute: darken($color, $hover-darken);
+			}
+		}
+	}
+}
+
+@mixin text-color-classes($color-map, $hover-darken, $prefix: 'text-') {
+	@include __apply-color-classes($color-map, $hover-darken, $prefix, $attribute: 'color')
+}
+
+@mixin box-color-classes($color-map, $hover-darken, $prefix: 'box-') {
+	@include __apply-color-classes($color-map, $hover-darken, $prefix, $attribute: 'background-color')
+}
+
+
+// we have a color map or whatever, and we want a one call way of applying that color map to our entire design.
+// essentially, we're saying that we've created a value, and we want to apply it to all relevant places without naming them all.
+// $map: (
+// 	'primary': ('color': #444444, 'elements': ('prefix': 'text', 'attr': 'color')),
+// 	'secondary': ,
+// 	'tertiary': 
+// );
+// @mixin __apply-values() {
+// 	@return 1;
+// }
+
+
+$map: ('primary': blue , 'warning': yellow, 'danger': red);
+@include __apply-color-classes($map, $hover-darken: 15%, $prefix: 'text-', $attribute: 'color');
+
+
+// $result: hue-spread($seed-hue: 40, $names: ('primary', 'secondary', 'tertiary'));
+// @debug $result;

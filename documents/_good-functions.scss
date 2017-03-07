@@ -1,0 +1,64 @@
+// mins are the real breakpoint value (inclusive)
+$min-sizes: (sm: $screen-sm-min, md: $screen-md-min, lg: $screen-lg-min);
+// maxes are that minus one (exclusive)
+$max-sizes: (xs: $screen-xs-max, sm: $screen-sm-max, md: $screen-md-max);
+
+@mixin screen-only($size) {
+	@if $size == lg {
+		// @debug "size = lg";
+		@media screen and (min-width: $screen-lg-min) {
+			@content;
+		}
+	}
+	@else if $size == xs {
+		// @debug "size = xs";
+		@media screen and (max-width: $screen-xs-max) {
+			@content;
+		}
+	}
+	@else {
+		// @debug "size in between";
+		// @debug map-get($min-sizes, $size);
+		// @debug map-get($max-sizes, $size);
+		@media screen and (min-width: map-get($min-sizes, $size)) and (max-width: map-get($max-sizes, $size)) {
+			@content;
+		}
+	}
+}
+
+@mixin screen-above($size) {
+	// should be valid for anything LARGER THAN the given size.
+	@if $size == lg {
+		@error "lg isn't a valid argument for this function.";
+	}
+	// @debug map-get($max-sizes, $size) + 1;
+	@media screen and (min-width: map-get($max-sizes, $size) + 1) {
+		@content;
+	}
+}
+
+@mixin screen-below($size) {
+	// should be valid for anything SMALLER THAN the given size.
+	@if $size == xs {
+		@error "xs isn't a valid argument for this function.";
+	}
+	@media screen and (max-width: map-get($min-sizes, $size) - 1) {
+		@content;
+	}
+}
+
+
+@mixin staticSizing($size) {
+	@include screen-only(xs) {
+		font-size: $size * 1.5;
+	}
+	@include screen-only(sm) {
+		font-size: $size * 1.25;
+	}
+	@include screen-only(md) {
+		font-size: $size;
+	}		
+	@include screen-only(lg) {
+		font-size: $size * 0.9;
+	}
+}

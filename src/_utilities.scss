@@ -1,0 +1,75 @@
+@function bn-get-bp-name-at-offset($bp, $offset) {
+	$bp-names = map-keys($bn-breakpoints);
+	$bp-names-length = length($bp-names);
+
+	$current-index = index($bp-names, $bp);
+
+	$offset-index = $current-index + $offset;
+
+	@if $offset-index < 1 or $offset-index > $bp-names-length {
+		@error "Your offset takes us out of bounds: length: #{$bn-names-length}, offset: #{$offset}, attempted index: #{offset-index}";
+	}
+
+	$offset-bp-name = nth($bp-names, $offset-index);
+}
+
+@function bn-get-bp-value-at-offset($bp, $offset) {
+	$offset-name = bn-get-bp-name-at-offset($bp, $offset);
+	@return map-get($bn-breakpoints, $offset-name);
+}
+
+@function bn-get-bp-next-value($bp) {
+	@return bn-get-bp-value-at-offset($bp, 1);
+}
+
+@function bn-get-bp-prev-value($bp) {
+	@return bn-get-bp-value-at-offset($bp, -1);
+}
+
+@function bn-get-bp-lower-bound($bp) {
+	@return map-get($bn-breakpoints, $bp);
+}
+
+
+@function bn-get-bp-upper-bound($bp) {
+	@return bn-get-bp-next-value($bp) - 1px;
+}
+
+
+@mixin bn-media($token) {
+	// min width should be inclusive
+	// max width should be exclusive (minus one)
+
+	$bp-param = token-breakpoint-param($token);
+	$bp-name = token-breakpoint-name($token);
+
+	@if type-of($bp-name) == 'list' {
+		$first = nth($bp-name, 1);
+		$second = nth($bp-name, 2);
+		$lower-value = bn-get-bp-lower-bound($first);
+		$upper-value = bn-get-bp-upper-bound($second);
+		@media screen and (min-width: $lower-value) and (max-width: $upper-value) {
+			@content;
+		}
+	}
+	@else if not $bp-param or $bp-param == 'up' {
+		@media screen and (min-width: bn-get-bp-lower-bound($bp-name)) {
+			@content;
+		}
+	}
+	@else if $bp-param == 'down' {
+		@media screen and (max-width: bn-get-bp-upper-bound($bp-name)) {
+			@content;
+		}
+	}
+	@else if $bp-param == 'not' {
+		@media screen and (max-width: bn-get-bp-lower-bound($bp-name) - 1) and (min-width: bn-get-bp-next-value($bp-name)) {
+			@content;
+		}
+	}
+	@else if $bp-param == 'only' {
+		@media screen and (min-width: bn-get-bp-lower-bound($bp-name)) and (max-width: bn-get-bp-upper-bound($bp-name)) {
+			@content;
+		}
+	}
+}
